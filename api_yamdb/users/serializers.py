@@ -1,10 +1,8 @@
 import re
-from django.core.mail import send_mail
 from django.core.validators import (MaxLengthValidator, MinLengthValidator,
                                     RegexValidator)
 
-from rest_framework.validators import UniqueValidator
-from rest_framework import serializers, status
+from rest_framework import serializers
 
 from reviews.models import User
 
