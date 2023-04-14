@@ -27,7 +27,7 @@ docker-compose exec web python manage.py migrate docker-compose exec web python 
 Доступ к проекту
 Проект доступен по адресу:
 
-http://158.160.29.40:8080
+http://158.160.29.40
 
 Технологии
 Python 3.7.0
