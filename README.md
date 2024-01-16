@@ -1,37 +1,79 @@
-[![Django-app workflow](https://github.com/Abdula-Dukuzov/yamdb_final/actions/workflows/yamdb_workflow.yml/badge.svg)](https://github.com/Abdula-Dukuzov/yamdb_final/actions/workflows/yamdb_workflow.yml)
+# YaMDb API
 
-Описание YaMDb
-Проект YaMDb собирает отзывы (Review) пользователей на произведения (Titles)
+API YaMDb - это интерфейс, который позволяет пользователям получать и публиковать отзывы на произведения. 
+Произведения делятся на категории: «Книги», «Фильмы», «Музыка».
 
-Сами произведения в YaMDb не хранятся, здесь нельзя посмотреть фильм или послушать музыку.
+## Начало работы
 
-Установка
-Как скачать проект:
-Клонируйте репозиторий и перейдите в него из командной строки:
+Для запуска проекта на локальной машине в целях разработки и тестирования.
 
-git clone git@github.com:Abdula-Dukuzov/yamdb_final.git
+### Предварительная подготовка
 
-Создание и наполнение env-файла /infra/.env
-DB_ENGINE=django.db.backends.postgresql # указываем, что работаем с postgresql DB_NAME= postgres # задаем имя базы данных POSTGRES_USER= # задаем логин для подключения к базе данных POSTGRES_PASSWORD= # задаем пароль для подключения к БД DB_HOST=db # задаем название сервиса (контейнера) DB_PORT=5432 # порт для подключения к БД
+#### Установка Docker
+Установите Docker, используя инструкции с официального сайта:
+- для [Windows и MacOS](https://www.docker.com/products/docker-desktop) 
+- для [Linux](https://docs.docker.com/engine/install/ubuntu/). Установите [Docker Compose](https://docs.docker.com/compose/install/)
 
-Запуск контейнеров
-В директории /infra/ выполните команду:
+### Установка проекта (на примере Linux)
 
-docker-compose up -d
+- Создайте папку для проекта YaMDb `mkdir yamdb` и перейдите в нее `cd yamdb`
+- Склонируйте этот репозиторий в текущую папку `git clone git@github.com:Abdula-Dukuzov/yamdb_final.git .`.
+- Создайте файл `.env` командой `touch .env` и добавьте в него переменные окружения для работы с базой данных:
+```sh
+DB_NAME=postgres # имя базы данных
+POSTGRES_USER=postgres # логин для подключения к базе данных
+POSTGRES_PASSWORD=postgres # пароль для подключения к БД (установите свой)
+DB_HOST=db # название сервиса (контейнер в котором будет развернута БД)
+DB_PORT=5432 # порт для подключения к БД
+SECRET_KEY=... # секретный ключ
+DEBUG = True # данную опцию следует добавить для отладки
+```
+- Запустите docker-compose `sudo docker-compose up -d` 
+- Примените миграции `sudo docker-compose exec web python manage.py migrate`
+- Соберите статику `sudo docker-compose exec web python manage.py collectstatic --no-input`
+- Создайте суперпользователя Django `sudo docker-compose exec web python manage.py createsuperuser --email 'admin@yamdb.com'`
 
-Миграции, админка и база данных
-Выполните команды:
+## Тестирование и работа API
 
-docker-compose exec web python manage.py migrate docker-compose exec web python manage.py createsuperuser docker-compose exec web python manage.py collectstatic --noinput ```docker-compose exec web python manage.py loaddata fixtures.json``
+Для локального тестирования можно загрузить данные из фикстур 
+```sh
+sudo docker-compose exec web python manage.py loaddata fixtures.json
+```
+**Подробная документация по API размещена по адресу http://localhost/redoc/.**
 
-Доступ к проекту
-Проект доступен по адресу:
+### Алгоритм регистрации пользователей
 
-http://158.160.29.40
+1. Пользователь отправляет запрос с параметром email на `/auth/email/`.
+2. Сервис отправляет письмо с кодом подтверждения `(confirmation_code)` на адрес `email`.
+3. Пользователь отправляет запрос с параметрами `email` и `confirmation_code` на `/auth/token/`, в ответе на запрос ему приходит `token` (JWT-токен)
+4. При желании пользователь отправляет PATCH-запрос на `/users/me/` и заполняет поля в своём профайле (описание полей — в документации).
 
-Технологии
-Python 3.7.0
-Django 2.2
-Django REST framework
-NGINX
-Docker
+### Пользовательские роли
+
+- **Аноним (не авторизованный пользователь)** — может просматривать описания произведений, читать отзывы и комментарии.
+- **Аутентифицированный пользователь** — может, как и Аноним, читать всё, дополнительно он может публиковать отзывы и 
+ставить рейтинг произведениям (фильмам/книгам/песням), может комментировать чужие отзывы и ставить им оценки; может 
+редактировать и удалять свои отзывы и комментарии.
+- **Модератор** — те же права, что и у Аутентифицированного пользователя плюс право удалять любые отзывы и комментарии.
+- **Администратор** — полные права на управление проектом и всем его содержимым. Может создавать и удалять категории и 
+произведения. Может назначать роли пользователям.
+- **Администратор Django** — те же права, что и у роли Администратор.
+
+## В разработке использованы
+
+* [Python](https://www.python.org/)
+* [Django](https://www.djangoproject.com/)
+* [Django REST framework](https://www.django-rest-framework.org/)
+* [DRF Simple JWT](https://django-rest-framework-simplejwt.readthedocs.io/en/latest/)
+* [PostgreSQL](https://www.postgresql.org/)
+* [Docker](https://www.docker.com/)
+* [Gunicorn](https://gunicorn.org/)
+* [Nginx](https://nginx.org/)
+
+## License [![BSDv3 license](https://img.shields.io/badge/License-BSDv3-blue.svg)](LICENSE.md)
+
+This project is licensed under the BSD 3 - see the [LICENSE.md](LICENSE.md) file for details
+
+## Ссылки
+
+Проект доступен по следующей ссылке <http://158.160.29.40>
